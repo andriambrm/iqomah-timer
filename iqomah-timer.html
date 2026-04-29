@@ -1,582 +1,131 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Penghitung Waktu Iqomah</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
-  <style>
-    :root {
-      --bg-deep:    #0a1a14;
-      --bg-card:    #0f2820;
-      --emerald:    #1a6b45;
-      --emerald-light: #22a06b;
-      --gold:       #c9a84c;
-      --gold-light: #f0d080;
-      --cream:      #f5ead8;
-      --text-dim:   #7aaf90;
-      --ring-track: rgba(201,168,76,0.15);
-      --ring-fill:  #c9a84c;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer Iqomah</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --accent-color: #27ae60;
+            --text-color: #ffffff;
+        }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: background-color 1s;
+        }
 
-    body {
-      font-family: 'Lato', sans-serif;
-      background: var(--bg-deep);
-      color: var(--cream);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
+        #container { text-align: center; width: 90%; }
 
-    /* ── geometric background ── */
-    .bg-pattern {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      opacity: 0.06;
-      background-image:
-        repeating-linear-gradient(60deg, var(--gold) 0, var(--gold) 1px, transparent 1px, transparent 60px),
-        repeating-linear-gradient(-60deg, var(--gold) 0, var(--gold) 1px, transparent 1px, transparent 60px),
-        repeating-linear-gradient(0deg, var(--gold) 0, var(--gold) 1px, transparent 1px, transparent 60px);
-    }
-    .bg-glow {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(26,107,69,0.25) 0%, transparent 70%);
-    }
+        h1 { font-size: 2rem; margin-bottom: 20px; }
 
-    /* ── screens ── */
-    .screen {
-      position: relative; z-index: 1;
-      width: 100%; max-width: 480px;
-      padding: 2rem 1.5rem;
-      display: flex; flex-direction: column; align-items: center; gap: 2rem;
-      animation: fadeIn .6s ease both;
-    }
-    .screen.hidden { display: none; }
+        .setup-screen button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--accent-color);
+            color: white;
+            transition: 0.3s;
+        }
 
-    @keyframes fadeIn  { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+        .setup-screen button:hover { background-color: #219150; }
 
-    /* ── header ornament ── */
-    .ornament {
-      font-family: 'Amiri', serif;
-      font-size: 2rem;
-      color: var(--gold);
-      letter-spacing: 4px;
-      line-height: 1;
-    }
-    .ornament-line {
-      display: flex; align-items: center; gap: 1rem; width: 100%;
-      justify-content: center;
-    }
-    .ornament-line::before,
-    .ornament-line::after {
-      content: '';
-      flex: 1; height: 1px;
-      background: linear-gradient(to right, transparent, var(--gold), transparent);
-      opacity: 0.5;
-    }
-    .ornament-line span {
-      font-family: 'Amiri', serif;
-      font-size: .9rem;
-      color: var(--gold);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
+        #timer-display {
+            font-size: 8rem;
+            font-weight: bold;
+            display: none;
+        }
 
-    /* ── title ── */
-    .title {
-      font-family: 'Cinzel', serif;
-      font-size: 1.7rem;
-      font-weight: 700;
-      color: var(--cream);
-      text-align: center;
-      letter-spacing: 2px;
-      line-height: 1.3;
-    }
-    .subtitle {
-      font-size: .85rem;
-      color: var(--text-dim);
-      text-align: center;
-      letter-spacing: 1px;
-    }
+        #status-text {
+            font-size: 2.5rem;
+            margin-top: 20px;
+            display: none;
+        }
 
-    /* ── prayer buttons ── */
-    .prayer-cards {
-      display: flex; gap: 1.2rem; width: 100%; justify-content: center;
-    }
-    .prayer-btn {
-      flex: 1; max-width: 180px;
-      background: var(--bg-card);
-      border: 1px solid rgba(201,168,76,0.25);
-      border-radius: 16px;
-      padding: 1.6rem 1rem;
-      cursor: pointer;
-      display: flex; flex-direction: column; align-items: center; gap: .75rem;
-      transition: border-color .25s, transform .2s, box-shadow .25s;
-      position: relative; overflow: hidden;
-    }
-    .prayer-btn::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(201,168,76,0.08), transparent);
-      opacity: 0; transition: opacity .3s;
-    }
-    .prayer-btn:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(201,168,76,0.2); }
-    .prayer-btn:hover::before { opacity: 1; }
-    .prayer-btn .arabic { font-family: 'Amiri', serif; font-size: 1.6rem; color: var(--gold-light); }
-    .prayer-btn .latin  { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600; color: var(--cream); letter-spacing: 1px; }
-    .prayer-btn .time-label { font-size: .75rem; color: var(--text-dim); letter-spacing: 1px; }
-
-    /* ── duration selector ── */
-    .duration-wrap {
-      width: 100%;
-      background: var(--bg-card);
-      border: 1px solid rgba(201,168,76,0.15);
-      border-radius: 12px;
-      padding: 1.2rem 1.4rem;
-    }
-    .duration-label {
-      font-size: .8rem;
-      color: var(--text-dim);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: .8rem;
-      text-align: center;
-    }
-    .duration-row {
-      display: flex; align-items: center; justify-content: center; gap: 1rem;
-    }
-    .dur-btn {
-      width: 36px; height: 36px;
-      background: rgba(201,168,76,0.1);
-      border: 1px solid rgba(201,168,76,0.3);
-      border-radius: 50%;
-      color: var(--gold);
-      font-size: 1.2rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background .2s, transform .15s;
-      user-select: none;
-    }
-    .dur-btn:hover { background: rgba(201,168,76,0.25); transform: scale(1.1); }
-    .dur-val {
-      font-family: 'Cinzel', serif;
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--cream);
-      min-width: 80px;
-      text-align: center;
-    }
-    .dur-unit { font-size: .8rem; color: var(--text-dim); letter-spacing: 2px; }
-
-    /* ── countdown ring ── */
-    .ring-wrap {
-      position: relative;
-      width: 260px; height: 260px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .ring-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-    .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 8; }
-    .ring-fill  { fill: none; stroke: var(--ring-fill); stroke-width: 8;
-                  stroke-linecap: round; transition: stroke-dashoffset .9s linear;
-                  filter: drop-shadow(0 0 6px rgba(201,168,76,0.5)); }
-    .ring-inner {
-      display: flex; flex-direction: column; align-items: center; gap: .3rem;
-      z-index: 1;
-    }
-    .countdown-display {
-      font-family: 'Cinzel', serif;
-      font-size: 3.4rem;
-      font-weight: 700;
-      color: var(--cream);
-      letter-spacing: 2px;
-      line-height: 1;
-    }
-    .countdown-label {
-      font-size: .75rem;
-      color: var(--text-dim);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-    }
-    .prayer-name-badge {
-      font-family: 'Amiri', serif;
-      font-size: 1.1rem;
-      color: var(--gold);
-      margin-top: .4rem;
-    }
-
-    /* ── control buttons ── */
-    .ctrl-row {
-      display: flex; gap: 1rem; width: 100%; justify-content: center;
-    }
-    .btn {
-      padding: .75rem 2rem;
-      border-radius: 50px;
-      border: 1px solid;
-      font-family: 'Lato', sans-serif;
-      font-size: .9rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: transform .15s, box-shadow .2s;
-    }
-    .btn:hover { transform: translateY(-2px); }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--gold), #a0782a);
-      border-color: var(--gold);
-      color: var(--bg-deep);
-      box-shadow: 0 4px 20px rgba(201,168,76,0.35);
-    }
-    .btn-primary:hover { box-shadow: 0 6px 28px rgba(201,168,76,0.55); }
-    .btn-secondary {
-      background: transparent;
-      border-color: rgba(201,168,76,0.3);
-      color: var(--text-dim);
-    }
-    .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
-
-    /* ── finish screen ── */
-    #screen-finish {
-      justify-content: center;
-      min-height: 100vh;
-      gap: 2rem;
-    }
-    .finish-arabic {
-      font-family: 'Amiri', serif;
-      font-size: 2.6rem;
-      color: var(--gold-light);
-      text-align: center;
-      line-height: 1.6;
-      animation: pulseGold 2s ease-in-out infinite;
-    }
-    @keyframes pulseGold {
-      0%, 100% { text-shadow: 0 0 10px rgba(240,208,128,0.3); }
-      50%       { text-shadow: 0 0 30px rgba(240,208,128,0.8); }
-    }
-    .finish-main {
-      font-family: 'Cinzel', serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      text-align: center;
-      color: var(--cream);
-      letter-spacing: 2px;
-      line-height: 1.5;
-    }
-    .finish-prayer {
-      font-family: 'Cinzel', serif;
-      font-size: 2rem;
-      font-weight: 700;
-      text-align: center;
-      color: var(--gold);
-      letter-spacing: 3px;
-    }
-    .finish-sub {
-      font-size: .85rem;
-      color: var(--text-dim);
-      text-align: center;
-      letter-spacing: 1px;
-    }
-    .tap-hint {
-      font-size: .75rem;
-      color: rgba(122,175,144,0.5);
-      text-align: center;
-      letter-spacing: 2px;
-      margin-top: 1rem;
-      animation: blink 2s ease-in-out infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:.3} 50%{opacity:.8} }
-
-    /* ── dark overlay ── */
-    #dark-overlay {
-      position: fixed; inset: 0; z-index: 100;
-      background: #000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 1.5s ease;
-    }
-    #dark-overlay.active { opacity: 1; pointer-events: all; cursor: pointer; }
-
-    .dark-tap-hint {
-      position: fixed; bottom: 2rem; left: 0; right: 0;
-      text-align: center;
-      color: rgba(255,255,255,0.1);
-      font-size: .75rem;
-      letter-spacing: 3px;
-      z-index: 101;
-      pointer-events: none;
-      animation: blink 3s ease-in-out infinite;
-    }
-  </style>
+        /* Mode Layar Gelap */
+        .sholat-mode {
+            background-color: #000000 !important;
+        }
+        .sholat-mode #container { display: none; }
+    </style>
 </head>
 <body>
 
-<div class="bg-pattern"></div>
-<div class="bg-glow"></div>
+    <div id="container">
+        <div id="setup" class="setup-screen">
+            <h1>Pilih Waktu Iqomah</h1>
+            <button onclick="startTimer(10, 'Dhuhur')">Dhuhur (10 Menit)</button>
+            <button onclick="startTimer(7, 'Ashar')">Ashar (7 Menit)</button>
+            <p style="font-size: 0.8rem; color: #888;">*Pastikan volume HP aktif</p>
+        </div>
 
-<!-- ═══════════ SCREEN 1 : PILIH SHOLAT ═══════════ -->
-<div class="screen" id="screen-select">
-  <div class="ornament">☽</div>
-
-  <div>
-    <div class="title">Penghitung Waktu<br>Iqomah</div>
-    <div class="subtitle" style="margin-top:.5rem">Pilih waktu sholat</div>
-  </div>
-
-  <div class="prayer-cards">
-    <button class="prayer-btn" onclick="selectPrayer('Dhuhur')">
-      <span class="arabic">الظهر</span>
-      <span class="latin">Dhuhur</span>
-      <span class="time-label">tengah hari</span>
-    </button>
-    <button class="prayer-btn" onclick="selectPrayer('Ashar')">
-      <span class="arabic">العصر</span>
-      <span class="latin">Ashar</span>
-      <span class="time-label">sore hari</span>
-    </button>
-  </div>
-
-  <div class="duration-wrap">
-    <div class="duration-label">Durasi Iqomah</div>
-    <div class="duration-row">
-      <button class="dur-btn" onclick="changeDuration(-1)">−</button>
-      <div>
-        <div class="dur-val" id="dur-display">10</div>
-        <div class="dur-unit" style="text-align:center">menit</div>
-      </div>
-      <button class="dur-btn" onclick="changeDuration(1)">+</button>
+        <div id="timer-display">00:00</div>
+        <div id="status-text"></div>
     </div>
-  </div>
 
-  <div class="ornament-line"><span>بِسْمِ اللَّهِ</span></div>
-</div>
+    <audio id="alarm">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
 
-<!-- ═══════════ SCREEN 2 : COUNTDOWN ═══════════ -->
-<div class="screen hidden" id="screen-timer">
-  <div class="ornament-line"><span id="timer-prayer-ornament">Iqomah Dhuhur</span></div>
+    <script>
+        let countdown;
+        const timerDisplay = document.getElementById('timer-display');
+        const statusText = document.getElementById('status-text');
+        const setupScreen = document.getElementById('setup');
+        const alarm = document.getElementById('alarm');
 
-  <div class="ring-wrap">
-    <svg class="ring-svg" viewBox="0 0 260 260">
-      <circle class="ring-track" cx="130" cy="130" r="117"/>
-      <circle class="ring-fill"  cx="130" cy="130" r="117" id="ring-arc"/>
-    </svg>
-    <div class="ring-inner">
-      <div class="countdown-display" id="timer-display">10:00</div>
-      <div class="countdown-label">tersisa</div>
-      <div class="prayer-name-badge" id="timer-prayer-name">Sholat Dhuhur</div>
-    </div>
-  </div>
+        function startTimer(minutes, sholat) {
+            setupScreen.style.display = 'none';
+            timerDisplay.style.display = 'block';
+            
+            let seconds = minutes * 60;
 
-  <div class="ctrl-row">
-    <button class="btn btn-secondary" onclick="pauseResume()" id="btn-pause">⏸ Jeda</button>
-    <button class="btn btn-secondary" onclick="resetTimer()">↺ Ulang</button>
-  </div>
+            countdown = setInterval(() => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
 
-  <div class="ornament-line"><span>اللَّهُ أَكْبَر</span></div>
-</div>
+                timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-<!-- ═══════════ SCREEN 3 : FINISH ═══════════ -->
-<div class="screen hidden" id="screen-finish">
-  <div class="finish-arabic">الصَّلَاةُ خَيْرٌ مِنَ النَّوْمِ</div>
-  <div class="ornament-line"><span>selamat menunaikan</span></div>
-  <div class="finish-main">Selamat Menunaikan</div>
-  <div class="finish-prayer" id="finish-prayer-name">Sholat Dhuhur</div>
-  <div class="finish-sub">Semoga Allah menerima ibadah Anda</div>
-  <div class="tap-hint">layar akan gelap dalam beberapa saat…</div>
-</div>
+                if (seconds <= 0) {
+                    clearInterval(countdown);
+                    finishTimer(sholat);
+                }
+                seconds--;
+            }, 1000);
+        }
 
-<!-- ═══════════ DARK OVERLAY ═══════════ -->
-<div id="dark-overlay" onclick="wakeScreen()"></div>
-<div class="dark-tap-hint" id="dark-hint">ketuk untuk menyalakan layar</div>
+        function finishTimer(sholat) {
+            timerDisplay.style.display = 'none';
+            statusText.style.display = 'block';
+            statusText.textContent = `Selamat Menunaikan Sholat ${sholat}`;
+            
+            // Putar Alarm
+            alarm.play();
 
-<script>
-  /* ── state ── */
-  let selectedPrayer = '';
-  let totalSeconds = 600;
-  let remaining   = 600;
-  let durationMin = 10;
-  let timerInterval = null;
-  let paused = false;
-  let alarmCtx = null;
-  let alarmNodes = [];
+            // Matikan alarm setelah 10 detik
+            setTimeout(() => {
+                alarm.pause();
+                alarm.currentTime = 0;
+            }, 10000);
 
-  /* ── ring geometry ── */
-  const CIRC = 2 * Math.PI * 117; // ~735.1
-  const arc  = document.getElementById('ring-arc');
-  arc.style.strokeDasharray  = CIRC;
-  arc.style.strokeDashoffset = 0;
-
-  /* ── duration selector ── */
-  function changeDuration(delta) {
-    durationMin = Math.max(1, Math.min(30, durationMin + delta));
-    document.getElementById('dur-display').textContent = durationMin;
-  }
-
-  /* ── prayer selection ── */
-  function selectPrayer(name) {
-    selectedPrayer = name;
-    totalSeconds   = durationMin * 60;
-    remaining      = totalSeconds;
-
-    document.getElementById('timer-prayer-ornament').textContent = 'Iqomah ' + name;
-    document.getElementById('timer-prayer-name').textContent     = 'Sholat ' + name;
-    document.getElementById('finish-prayer-name').textContent    = 'Sholat ' + name;
-
-    showScreen('screen-timer');
-    updateDisplay();
-    startTimer();
-  }
-
-  /* ── screens ── */
-  function showScreen(id) {
-    ['screen-select','screen-timer','screen-finish'].forEach(s => {
-      document.getElementById(s).classList.add('hidden');
-    });
-    const el = document.getElementById(id);
-    el.classList.remove('hidden');
-    el.style.animation = 'none';
-    requestAnimationFrame(() => { el.style.animation = ''; });
-  }
-
-  /* ── timer core ── */
-  function startTimer() {
-    paused = false;
-    document.getElementById('btn-pause').textContent = '⏸ Jeda';
-    clearInterval(timerInterval);
-    timerInterval = setInterval(tick, 1000);
-  }
-
-  function tick() {
-    if (paused) return;
-    remaining--;
-    updateDisplay();
-    if (remaining <= 0) {
-      clearInterval(timerInterval);
-      onTimerEnd();
-    }
-  }
-
-  function updateDisplay() {
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
-    document.getElementById('timer-display').textContent =
-      String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-
-    // ring
-    const ratio = totalSeconds > 0 ? remaining / totalSeconds : 0;
-    arc.style.strokeDashoffset = CIRC * (1 - ratio);
-
-    // colour shift: gold → red when < 60s
-    if (remaining <= 60) {
-      const t = 1 - remaining / 60;
-      arc.style.stroke = `hsl(${Math.round(45 - t*45)}, 80%, ${Math.round(55 + t*10)}%)`;
-    } else {
-      arc.style.stroke = 'var(--gold)';
-    }
-  }
-
-  function pauseResume() {
-    paused = !paused;
-    document.getElementById('btn-pause').textContent = paused ? '▶ Lanjut' : '⏸ Jeda';
-  }
-
-  function resetTimer() {
-    clearInterval(timerInterval);
-    stopAlarm();
-    showScreen('screen-select');
-  }
-
-  /* ── on timer end ── */
-  function onTimerEnd() {
-    playAlarm();
-    showScreen('screen-finish');
-
-    // alarm auto-stop after 10 seconds
-    setTimeout(() => {
-      stopAlarm();
-      // go dark after a brief pause
-      setTimeout(() => goBlack(), 1200);
-    }, 10000);
-  }
-
-  /* ── Web Audio alarm (takbir-style rising tones) ── */
-  function playAlarm() {
-    try {
-      alarmCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const beepSequence = [
-        // freq, startTime, duration, gain
-        [440, 0.0, 0.4, 0.6],
-        [440, 0.5, 0.4, 0.6],
-        [440, 1.0, 0.4, 0.6],
-        [528, 1.6, 0.6, 0.7],
-        [528, 2.3, 0.6, 0.7],
-        [660, 3.0, 1.2, 0.8],
-        [528, 4.5, 0.5, 0.5],
-        [440, 5.2, 0.5, 0.4],
-        [330, 6.0, 1.5, 0.3],
-      ];
-      alarmNodes = [];
-      beepSequence.forEach(([freq, t, dur, gain]) => {
-        const osc  = alarmCtx.createOscillator();
-        const env  = alarmCtx.createGain();
-        const now  = alarmCtx.currentTime;
-
-        osc.type      = 'sine';
-        osc.frequency.setValueAtTime(freq, now + t);
-        env.gain.setValueAtTime(0, now + t);
-        env.gain.linearRampToValueAtTime(gain, now + t + 0.05);
-        env.gain.linearRampToValueAtTime(0,    now + t + dur);
-
-        osc.connect(env);
-        env.connect(alarmCtx.destination);
-        osc.start(now + t);
-        osc.stop(now + t + dur + 0.1);
-        alarmNodes.push(osc);
-      });
-    } catch(e) { console.warn('Audio not supported', e); }
-  }
-
-  function stopAlarm() {
-    if (alarmCtx) {
-      alarmNodes.forEach(n => { try { n.stop(); } catch(e){} });
-      alarmCtx.close();
-      alarmCtx = null; alarmNodes = [];
-    }
-  }
-
-  /* ── dark screen ── */
-  function goBlack() {
-    document.getElementById('dark-overlay').classList.add('active');
-    document.getElementById('dark-hint').style.opacity = '1';
-  }
-
-  function wakeScreen() {
-    document.getElementById('dark-overlay').classList.remove('active');
-    // show reset button after wake
-    setTimeout(() => {
-      const hint = document.getElementById('dark-hint');
-      hint.style.opacity = '0';
-    }, 800);
-    // allow manual reset
-    showScreen('screen-select');
-  }
-
-  /* prevent screen sleep on supported browsers */
-  let wakeLock = null;
-  async function requestWakeLock() {
-    if ('wakeLock' in navigator) {
-      try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
-    }
-  }
-  document.addEventListener('visibilitychange', async () => {
-    if (wakeLock !== null && document.visibilityState === 'visible') requestWakeLock();
-  });
-  requestWakeLock();
-</script>
+            // Layar menjadi gelap setelah 15 detik (memberi waktu baca tulisan)
+            setTimeout(() => {
+                document.body.classList.add('sholat-mode');
+            }, 15000);
+        }
+    </script>
 </body>
 </html>
